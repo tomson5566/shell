@@ -1,0 +1,31 @@
+version: '3'
+services:
+  kuboard:
+    image: eipwork/kuboard:v3.5.0.3
+    container_name: kuboard
+    restart: always
+    ports:
+      - 8081:80
+      - 10081:10081
+    volumes:
+      - /data/kuboard-data/:/data
+    environment:
+      KUBOARD_ENDPOINT: "http://192.168.0.220:8081"
+      KUBOARD_LOGIN_TYPE: "ldap"
+      KUBOARD_AGENT_SERVER_TCP_PORT: "10081"
+      KUBOARD_ROOT_USER: "admin"
+      LDAP_HOST: "ldap.tmsj.nas:389"
+      LDAP_SKIP_SSL_VERIFY: "true"
+      LDAP_BIND_DN: "uid=ldapadmin,cn=users,dc=tmsj,dc=nas"
+      LDAP_BIND_PASSWORD: "Ldap.123@123"
+      LDAP_BASE_DN: "dc=tmsj,dc=nas"
+      LDAP_FILTER: "(objectClass=inetOrgPerson)"
+      LDAP_ID_ATTRIBUTE: "uidNumber"
+      LDAP_USER_NAME_ATTRIBUTE: "uid"
+      LDAP_EMAIL_ATTRIBUTE: "mail"
+      LDAP_DISPLAY_NAME_ATTRIBUTE: "displayName"
+      LDAP_GROUP_SEARCH_BASE_DN: "cn=groups,dc=tmsj,dc=nas"
+      LDAP_GROUP_SEARCH_FILTER: "(objectClass=posixGroup)"
+      LDAP_USER_MACHER_USER_ATTRIBUTE: "gidNumber"
+      LDAP_USER_MACHER_GROUP_ATTRIBUTE: "gidNumber"
+      LDAP_GROUP_NAME_ATTRIBUTE: "cn"

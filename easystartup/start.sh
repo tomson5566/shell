@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cd /root/docker-compose/example && docker-compose up -d
-cd /root/docker-compose/mysql8 && docker-compose up -d
-cd /root/docker-compose/redis && docker-compose up -d
+#cd /root/docker-compose/example && docker-compose up -d
+#cd /root/docker-compose/mysql8 && docker-compose up -d
+#cd /root/docker-compose/redis && docker-compose up -d
 
 
 appPath='/home/supert/app'
@@ -70,7 +70,7 @@ for app in $apps
 do
     echo ${app} 
     #nohup java -Xms256m -Xmx1024m -XX:PermSize=32m -XX:MaxPermSize=512m -jar $app --spring.profiles.active=pro >$app.log 2>&1&
-    nohup java -Xms256m -Xmx1024m -XX:PermSize=32m -XX:MaxPermSize=512m -DCONFIG_SERVER_ADDR=192.168.0.52:8848 -jar $app --spring.profiles.active=pro >$app.log 2>&1&
+    nohup java -Xms256m -Xmx1024m -XX:PermSize=32m -XX:MaxPermSize=512m -DCONFIG_SERVER_ADDR=127.0.0.1:8848 -jar $app --spring.profiles.active=pro >$app.log 2>&1&
 
 done 
 

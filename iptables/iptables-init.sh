@@ -1,11 +1,22 @@
 #!/bin/bash
-iptables -t filter -A INPUT -i lo -j ACCEPT
-iptables -A FORWARD -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 1/sec -j ACCEPT
-iptables -A FORWARD -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK, RST -m limit --limit 1/sec -j ACCEPT
-iptables -A FORWARD -f -m limit --limit 100/sec --limit-burst 100 -j ACCEPT
-iptables -A FORWARD -p icmp -m limit --limit 1/sec --limit-burst 10 -j ACCEPT
+ip a | grep ^[0-9] | awk '{print $2}' | awk -F: '{print $1}' > ifdev.txt
+netstat -anptu | grep LISTEN | awk '{print $4}' | awk -F ':' '{print $NF}' > listen.txt
+ifdev=(`cat ifdev.txt`)
+localip=192.168.0.52
 
-iptables -A FORWARD -p icmp -m icmp --icmp-type 8 -m limit --limit 1/sec -j ACCEPT
+iplisten=(`cat listen.txt`)
+
+netstat -anptu | grep LISTEN | grep docker | awk '{print $4}' | awk -F ':' '{print $NF}' > dockerport.txt
+DockerPort=(`cat dockerport.txt`)
+
+
+iptables -t filter -A INPUT -i lo -j ACCEPT
+#iptables -A FORWARD -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 1/sec -j ACCEPT
+#iptables -A FORWARD -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK, RST -m limit --limit 1/sec -j ACCEPT
+#iptables -A FORWARD -f -m limit --limit 1000/sec --limit-burst 100 -j ACCEPT
+#iptables -A FORWARD -p icmp -m limit --limit 1/sec --limit-burst 10 -j ACCEPT
+
+#iptables -A FORWARD -p icmp -m icmp --icmp-type 8 -m limit --limit 1/sec -j ACCEPT
 iptables -A INPUT -p ICMP --icmp-type time-exceeded -j DROP
 iptables -A OUTPUT -p ICMP --icmp-type time-exceeded -j DROP
 iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
@@ -28,120 +39,57 @@ iptables -A INPUT -p tcp -m state --state NEW,ESTABLISHED -m tcp --dport 10022 -
 iptables -A INPUT -p tcp -m state --state NEW,ESTABLISHED -m tcp --dport 80 -j ACCEPT
 iptables -A INPUT -p tcp -m state --state NEW,ESTABLISHED -m tcp --dport 443 -j ACCEPT
 iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
+iptables -t filter -I INPUT -p tcp -s 127.0.0.1 -j ACCEPT
+
+
+for j in `echo ${!iplisten[@]}`;
+do
+iptables -t filter -A INPUT -p tcp -s $localip --dport ${iplisten[$j]} -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -t filter -A INPUT -p tcp --dport ${iplisten[$j]} -j DROP
+done
 
 
 
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 25 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 23306 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 6379 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8111 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8719 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8848 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8720 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8721 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8722 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8723 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8724 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 9848 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 3000 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 5656 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 9849 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8189 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 8288 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 7681 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 9090 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 7778 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 127.0.0.1 --dport 7681 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 25 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 23306 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 6379 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8111 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8719 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8848 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8720 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8721 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8722 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8723 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8724 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 9848 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 3000 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 5656 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 9849 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8189 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 8288 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 7681 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 9090 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 7778 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -t filter -A INPUT -p tcp -s 192.168.0.53 --dport 7681 -m state --state NEW,ESTABLISHED -j ACCEPT
-
-iptables -t filter -A INPUT -p tcp --dport 25 -j DROP
-iptables -t filter -A INPUT -p tcp  --dport 23306 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 6379 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8111 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8719 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8848 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8720 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8721 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8722 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8723 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8724 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 9848 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 3000 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 5656 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 9849 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8189 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8288 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 9090 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7778 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
+# 允许本地接收 来自docker网络的回包
+for i in `echo ${!ifdev[@]}`;
+do
+iptables -t filter -I INPUT -i ${ifdev[$i]} -j ACCEPT
+#iptables -t filter -I INPUT -i br-e6af8b661e43 -j ACCEPT
+#iptables -t filter -I INPUT -i br-6ace888e68be -j ACCEPT
+#iptables -t filter -I INPUT -i br-f0f8e042bbae -j ACCEPT
+#iptables -t filter -I INPUT -i br-3ab77afedf4b -j ACCEPT
+#iptables -t filter -I INPUT -i lo -j ACCEPT
+done
 
 
-iptables -t filter -A INPUT -p tcp --dport 25 -j DROP
-iptables -t filter -A INPUT -p tcp  --dport 23306 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 6379 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8111 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8719 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8848 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8720 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8721 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8722 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8723 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8724 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 9848 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 3000 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 5656 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 9849 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8189 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 8288 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 9090 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7778 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -p tcp --dport 7681 -j DROP
-iptables -t filter -A INPUT -m state --state NEW,ESTABLISHED,RELATED -j DROP
+
+ 
+
+#iptables -t filter -A INPUT -m state --state NEW,ESTABLISHED,RELATED -j DROP
+#iptables -t filter -A INPUT -m state --state NEW,ESTABLISHED,RELATED -j DROP
 
 # docker port
-iptables -I DOCKER -i ens192 -p tcp -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j DROP
+for d in `echo ${!DockerPort[@]}`;
+do
+iptables -I DOCKER -i ens192 -p tcp --dport ${DockerPort[$d]} -j DROP
+#iptables -I DOCKER -i ens192 -p tcp -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j DROP
+# 放行访问docker 端口的网段
+iptables -I DOCKER -i ens192 -p tcp -s 192.168.0.0/24 --dport ${DockerPort[$d]} -j ACCEPT
+iptables -I DOCKER -i ens192 -p tcp -s 192.168.60.0/24 --dport ${DockerPort[$d]} -j ACCEPT
+iptables -I DOCKER -i ens192 -p tcp -s 192.168.3.0/24 --dport ${DockerPort[$d]} -j ACCEPT
 
-iptables -I DOCKER -i ens192 -p tcp -s 192.168.0.0/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
-iptables -I DOCKER -i ens192 -p tcp -s 172.0.0.1/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
-iptables -I DOCKER -i ens192 -p tcp -s 192.168.60.0/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
+#iptables -I DOCKER -i ens192 -p tcp -s 192.168.0.0/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
+#iptables -I DOCKER -i ens192 -p tcp -s 172.0.0.0/24 -j ACCEPT
+#iptables -I DOCKER -i ens192 -p tcp -s 192.168.60.0/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
+#iptables -I DOCKER -i ens192 -p tcp -s 10.7.7.137 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
+#iptables -I DOCKER -i ens192 -p tcp -s 192.168.3.0/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j ACCEPT
+
+#iptables -I DOCKER -i ens192 -p tcp -s 10.7.7.0/24 -m multiport --dports 23306,9090,8848,9848,9849,3000,6379,3306,23306 -j DROP
+done
+
+iptables -I DOCKER -i ens192 -p tcp -s 172.0.0.0/24 -j ACCEPT
 
 
 
-
-
-
-
-
-
+sleep 1
+rm -rf ifdev.txt listen.txt dockerport.txt
