@@ -266,3 +266,6 @@ main(){
 }
 
 main
+mv docker-compose /usr/local/sbin/
+chmod +x /usr/local/sbin/docker-compose
+
