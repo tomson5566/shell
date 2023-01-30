@@ -1,0 +1,126 @@
+#!/bin/bash
+#chkconfig: 2345 90   90
+#description: weblogic
+#weblogic   Bring up/down
+# /ect/init.d/weblogic
+#Please edit the Variable
+#export LC_ALL=zh_CN.GB18030
+
+#testW='Server started in RUNNING mode'
+
+INITLOG_ARGS=""
+weblogic_home=/home/weblogic10.3.6/oracle/user_projects/domains/base_domain
+prog=weblogic
+RETVAL=0
+#export SERVER_NAME=AdminServer
+#ADMIN_URL="t3://192.168.50.197:7001"
+#export LINELOSS=lineloss_server
+#export SGUAP=sguap_server
+export BEA_BASE=/home/weblogic10.3.6
+export BEA_HOME=$BEA_BASE/oracle/user_projects/domains/base_domain
+export BEA_LOG=$BEA_BASE/oracle/user_projects/domains/base_domain/weblogic_start.log
+#export ADMIN_LOG=/app/weblogic/logs/admin_server.log
+#export SGUAP_LOG=/app/weblogic/logs/sguap.log
+#export LINELOSS_LOG=/app/weblogic/logs/lineloss.log
+export PATH=$PATH:$BEA_HOME
+
+
+
+BEA_OWNER="root"
+if [ ! -f $BEA_HOME/startWebLogic.sh -o ! -d $BEA_HOME ]
+then
+    echo "WebLogic startup:cannot start"
+    exit 1
+fi
+# depending on parameter -- startup,shutdown,restart
+case "$1" in
+start)
+	created=`ps -ef | grep startWebLogic.sh | grep -v grep | awk '{print $2 }'`
+	if [[ $created != "" ]]; then
+		echo "weblogic is started"
+		exit 21
+	fi
+	echo -n "Starting Weblogic:log file $BEA_LOG"
+#	touch /var/lock/weblogic
+	su - $BEA_OWNER -c "nohup sh $BEA_HOME/startWebLogic.sh > $BEA_LOG 2>$1 &"
+	sleep 30
+    	started=`cat $BEA_HOME/weblogic_start.log | grep 'Server started in RUNNING mode'`	
+	if [[ $started != "" ]]; then
+		echo "------------------------ok"
+		echo "now starting AdminServer"
+#		nohup sh $BEA_HOME/bin/startManagedWebLogic.sh $SERVER_NAME $ADMIN_URL >> $ADMIN_LOG 2>$1 &
+		#if [[ $? != 0 ]]; then
+		#echo "AdminServer start error!!！"
+		#else
+		#echo "AdminServer start ok!!! "
+		fi
+#		sleep 100
+#		nohup sh $BEA_HOME/bin/startManagedWebLogic.sh $SGUAP $ADMIN_URL >> $SGUAP_LOG 2>$1 &
+#		if [[ $? != 0 ]]; then
+#                echo "sguap_server start error!!！"
+#                else
+#                echo "sguap_server start ok!!! "
+#                fi
+#		sleep 100
+#                nohup sh $BEA_HOME/bin/startManagedWebLogic.sh $LINELOSS $ADMIN_URL >> $LINELOSS_LOG 2>$1 &
+#                if [[ $? != 0 ]]; then
+#                echo "lineloss_server start error!!！"
+#                else
+#                echo "lineloss_server start ok!!! "
+#                fi
+	
+	;;
+stop)
+	echo -n "Shutdown Weblogic:"
+#	rm -rf /var/lock/weblogic
+	su - $BEA_OWNER -c "sh $BEA_HOME/stopWebLogic.sh >> $BEA_LOG"
+	pid=`ps -ef | grep weblogic | grep -v "grep" | awk '{print $2}'`
+	if [ "$pid" != "" ]
+	then
+		kill -9 $pid
+	else
+		echo "weblogic is not running"
+	fi;
+	RETVAL=$?
+	[ $RETVAL ==  0 ] && rm -f /var/lock/subsys/weblogic
+	echo "------------------------ok"
+	;;
+reload|restart)
+	$0 stop
+	$0 start
+	;;
+
+status)
+	wpid=`ps -ef | grep weblogic | grep -v grep | awk '{print $2 }' | wc -l`
+#	apid=$(ps -ef | grep weblogic | grep -v grep | awk '{print $2 }')	
+#	gpid=$(ps -ef | grep sguap_server | grep -v grep | awk '{print $2 }')
+#	lpid=$(ps -ef | grep lineloss_server | grep -v grep | awk '{print $2 }')
+	if [  $wpid -eq 0  ]; then
+		echo "$wpid"
+	else
+		echo "$wpid"
+                echo 'run file'
+	fi
+#	if [ "$apid" != "" ]; then
+#                echo "AdminServer is running"
+#        else
+#                echo "AdminServer is down"
+#        fi
+#	if [ "$gpid" != "" ]; then
+#                echo "sguap_server is running"
+#        else
+#                echo "sguap_server is down"
+#        fi
+#	
+#	if [ "$lpid" != "" ]; then
+#                echo "lineloss_server is running"
+#        else
+#                echo "lineloss_server is down"
+#        fi
+
+	;;
+*)
+	echo "Usage: `basename $0` start|restart|reload"
+	exit 2
+esac
+exit 0

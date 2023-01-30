@@ -1,8 +1,16 @@
 #!/bin/bash
 
-#cd /root/docker-compose/example && docker-compose up -d
-#cd /root/docker-compose/mysql8 && docker-compose up -d
-#cd /root/docker-compose/redis && docker-compose up -d
+export JAVA_HOME=/home/isc/jdk1.8.0_101
+export JRE_HOME=${JAVA_HOME}/jre
+export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib:$CLASSPATH
+export JAVA_PATH=${JAVA_HOME}/bin:${JRE_HOME}/bin
+export PATH=$PATH:${JAVA_PATH}
+
+export CONFIG_SERVER_ADDR=jxxcs01
+export MYSQL_HOST=jxxcs01
+export MYSQL_PORT=23306
+export MYSQL_USR=jianxiuser
+export MYSQL_PWD='NyDsj@bigData;'
 
 
 appPath='/home/supert/app'
@@ -69,9 +77,7 @@ apps=`find ${appPath} -name '*.jar'`
 for app in $apps
 do
     echo ${app} 
-    #nohup java -Xms256m -Xmx1024m -XX:PermSize=32m -XX:MaxPermSize=512m -jar $app --spring.profiles.active=pro >$app.log 2>&1&
-    nohup java -Xms256m -Xmx1024m -XX:PermSize=32m -XX:MaxPermSize=512m -DCONFIG_SERVER_ADDR=127.0.0.1:8848 -jar $app --spring.profiles.active=pro >$app.log 2>&1&
-
+    nohup java -Xms256m -Xmx1024m -XX:PermSize=32m -XX:MaxPermSize=512m -jar $app --spring.profiles.active=pro >$app.log 2>&1&
 done 
 
 

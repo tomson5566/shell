@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install/Update docker offline
-#  example :::   ./install.sh -f /root/docker-18.09.6.tgz
+#  example :::   ./install.sh -f /root/docker-20.10.9.tgz
 
 
 offline_file=""
@@ -266,6 +266,24 @@ main(){
 }
 
 main
+
 mv docker-compose /usr/local/sbin/
 chmod +x /usr/local/sbin/docker-compose
+
+#step01 docker-compose
+#step02 systemctl start docker
+#step03 systemctl enable docker
+
+
+
+#/*
+# cd /root/docker-compose/images
+#[root@nanchongceshi50 images]# docker load -i docker.nacos\:v2.1.2.tar 
+#Loaded image: nacos/nacos-server:v2.1.2
+#[root@nanchongceshi50 images]# docker load -i docker.redis.tar 
+#Loaded image: redis:6.0.16-alpine
+#[root@nanchongceshi50 images]# docker load -i mysql.8.0.30.tar 
+#Loaded image: example/mysql:8.0.30
+#*/
+
 
